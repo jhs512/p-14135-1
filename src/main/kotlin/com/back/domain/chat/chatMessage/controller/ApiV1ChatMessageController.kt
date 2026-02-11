@@ -1,13 +1,16 @@
 package com.back.domain.chat.chatMessage.controller
 
 import com.back.domain.chat.chatMessage.entity.ChatMessage
+import com.back.global.sse.SseEmitters
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDateTime
 
 @RestController
 @RequestMapping("/api/v1/chat/rooms/{chatRoomId}/messages")
 @CrossOrigin(origins = ["https://cdpn.io"])
-class ApiV1ChatMessageController {
+class ApiV1ChatMessageController(
+    private val sseEmitters: SseEmitters
+) {
     private var lastChatMessageId = 0
 
     private val chatMessagesByRoomId: MutableMap<Int, MutableList<ChatMessage>> = mutableMapOf(
@@ -101,6 +104,8 @@ class ApiV1ChatMessageController {
         )
 
         chatMessages.add(chatMessage)
+
+        sseEmitters.send("chat__room__$chatRoomId", "chat__messageCreated", chatMessage)
 
         return chatMessage
     }
