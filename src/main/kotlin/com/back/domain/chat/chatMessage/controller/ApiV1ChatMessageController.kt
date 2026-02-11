@@ -2,6 +2,7 @@ package com.back.domain.chat.chatMessage.controller
 
 import com.back.domain.chat.chatMessage.entity.ChatMessage
 import com.back.global.sse.SseEmitters
+import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDateTime
 
@@ -9,7 +10,8 @@ import java.time.LocalDateTime
 @RequestMapping("/api/v1/chat/rooms/{chatRoomId}/messages")
 @CrossOrigin(origins = ["https://cdpn.io"])
 class ApiV1ChatMessageController(
-    private val sseEmitters: SseEmitters
+    private val sseEmitters: SseEmitters,
+    private val messagingTemplate: SimpMessagingTemplate
 ) {
     private var lastChatMessageId = 0
 
@@ -106,6 +108,7 @@ class ApiV1ChatMessageController(
         chatMessages.add(chatMessage)
 
         sseEmitters.send("chat__room__$chatRoomId", "chat__messageCreated", chatMessage)
+        messagingTemplate.convertAndSend("/topic/chat/room/$chatRoomId/messageCreated", chatMessage)
 
         return chatMessage
     }
@@ -123,6 +126,7 @@ class ApiV1ChatMessageController(
         )
 
         sseEmitters.send("chat__room__$chatRoomId", "chat__systemMessageCreated", systemMessage)
+        messagingTemplate.convertAndSend("/topic/chat/room/$chatRoomId/systemMessageCreated", systemMessage)
     }
 
     @PostMapping("/exit")
@@ -137,5 +141,6 @@ class ApiV1ChatMessageController(
         )
 
         sseEmitters.send("chat__room__$chatRoomId", "chat__systemMessageCreated", systemMessage)
+        messagingTemplate.convertAndSend("/topic/chat/room/$chatRoomId/systemMessageCreated", systemMessage)
     }
 }
